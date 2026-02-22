@@ -5,14 +5,6 @@
     "installCommand": "npm install",
     "rewrites": [
         {
-            "source": "/api/moods",
-            "destination": "/api/moods"
-        },
-        {
-            "source": "/api/journals",
-            "destination": "/api/journals"
-        },
-        {
             "source": "/chat",
             "destination": "/api/chat"
         },
@@ -25,7 +17,7 @@
             "destination": "/api/health"
         },
         {
-            "source": "/(.*)",
+            "source": "/((?!api/).*)",
             "destination": "/index.html"
         }
     ]

@@ -1,33 +1,28 @@
 // api/chat.js - Vercel Serverless Function
-export default async function handler(req, res) {
-    // Allow CORS
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+const getMockResponse = () => {
+    const responses = [
+        "I hear you. Maintaining mental balance is a journey, and I'm here to support you.",
+        "That sounds important. Can you tell me more about how that made you feel?",
+        "Take a deep breath. You're doing the best you can.",
+        "It's okay to feel this way. I'm listening.",
+        "Have you tried taking a moment to practice mindfulness today?",
+        "I'm running in offline mode right now, but I'm still here for you!"
+    ];
+    return responses[Math.floor(Math.random() * responses.length)];
+};
+
+module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
+    if (req.method === 'OPTIONS') return res.status(200).end();
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     const GROQ_API_KEY = process.env.GROQ_API_KEY;
-    const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-
-    const getMockResponse = () => {
-        const responses = [
-            "I hear you. Maintaining mental balance is a journey, and I'm here to support you.",
-            "That sounds important. Can you tell me more about how that made you feel?",
-            "Take a deep breath. You're doing the best you can.",
-            "It's okay to feel this way. I'm listening.",
-            "Have you tried taking a moment to practice mindfulness today?",
-            "I'm running in offline mode right now, but I'm still here for you!"
-        ];
-        return responses[Math.floor(Math.random() * responses.length)];
-    };
 
     try {
         const { messages } = req.body;
@@ -37,7 +32,7 @@ export default async function handler(req, res) {
         }
 
         if (!GROQ_API_KEY) {
-            console.warn('⚠️ No GROQ_API_KEY found. Using mock response.');
+            console.warn('No GROQ_API_KEY set. Using mock response.');
             return res.json({ reply: getMockResponse(), isMock: true });
         }
 
@@ -63,7 +58,7 @@ export default async function handler(req, res) {
         const data = await response.json();
 
         if (!response.ok) {
-            console.error('❌ Groq API Error:', data.error?.message || data);
+            console.error('Groq API Error:', data.error?.message || data);
             return res.json({
                 reply: getMockResponse(),
                 isMock: true,
@@ -74,7 +69,7 @@ export default async function handler(req, res) {
         return res.json({ reply: data.choices[0].message.content.trim() });
 
     } catch (err) {
-        console.error('❌ Server Error:', err.message);
+        console.error('Chat handler error:', err.message);
         return res.json({ reply: "I'm having trouble connecting right now, but I'm still here for you. (Offline Mode)" });
     }
-}
+};

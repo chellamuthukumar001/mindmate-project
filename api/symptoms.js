@@ -1,23 +1,7 @@
-// api/symptoms.js - Vercel Serverless Function for Symptom Checking
-export default async function handler(req, res) {
-    res.setHeader('Access-Control-Allow-Credentials', true);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+// api/symptoms.js - Vercel Serverless Function
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-    if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-    const GROQ_API_KEY = process.env.GROQ_API_KEY;
-    const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-
-    const { symptoms } = req.body;
-
-    if (!symptoms || typeof symptoms !== 'string' || symptoms.trim().length < 3) {
-        return res.status(400).json({ error: 'Please provide a valid symptom description.' });
-    }
-
-    const systemPrompt = `You are a medically-informed AI symptom analysis assistant. 
+const systemPrompt = `You are a medically-informed AI symptom analysis assistant.
 Your role is to analyze patient-reported symptoms and provide structured medical guidance.
 
 IMPORTANT RULES:
@@ -27,38 +11,47 @@ IMPORTANT RULES:
 - Err on the side of caution for urgency.
 
 Urgency levels:
-- "emergency": life-threatening, call 112 immediately (e.g., chest pain + breathing difficulty, stroke signs, severe bleeding)
-- "urgent": needs same-day medical attention (e.g., high fever, severe pain, suspected fracture)
-- "moderate": see a doctor within 1-3 days (e.g., persistent symptoms, mild infections)
-- "low": self-care or routine appointment (e.g., mild cold, minor aches)
+- "emergency": life-threatening, call 112 immediately
+- "urgent": needs same-day medical attention
+- "moderate": see a doctor within 1-3 days
+- "low": self-care or routine appointment
 
 Respond ONLY with this JSON structure:
 {
   "summary": "One friendly sentence summarizing findings",
   "urgency": "emergency" | "urgent" | "moderate" | "low",
   "urgency_score": <number 1-10>,
-  "department": "Department name (e.g., Cardiology, General Medicine, Orthopedics)",
-  "specialist": "Type of doctor (e.g., Cardiologist, General Physician)",
+  "department": "Department name",
+  "specialist": "Type of doctor",
   "possible_conditions": ["Condition 1", "Condition 2", "Condition 3"],
-  "treatment": [
-    "Immediate step 1",
-    "Step 2",
-    "Step 3",
-    "When to seek immediate care"
-  ]
+  "treatment": ["Step 1", "Step 2", "Step 3", "When to seek immediate care"]
 }`;
 
+module.exports = async function handler(req, res) {
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    if (req.method === 'OPTIONS') return res.status(200).end();
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+    const GROQ_API_KEY = process.env.GROQ_API_KEY;
+    const { symptoms } = req.body;
+
+    if (!symptoms || typeof symptoms !== 'string' || symptoms.trim().length < 3) {
+        return res.status(400).json({ error: 'Please provide a valid symptom description.' });
+    }
+
     if (!GROQ_API_KEY) {
-        // Offline mock response
         return res.json({
-            summary: "Based on typical symptoms, here's a general guideline. Please consult a doctor for accurate diagnosis.",
+            summary: "Offline mode — showing general guidance. Please consult a doctor.",
             result: {
-                summary: "Unable to reach AI service — showing general guidance.",
                 urgency: 'moderate',
                 urgency_score: 5,
                 department: 'General Medicine',
                 specialist: 'General Physician',
-                possible_conditions: ['Common Cold', 'Viral Infection', 'Fatigue-related condition'],
+                possible_conditions: ['Common Cold', 'Viral Infection', 'Fatigue'],
                 treatment: [
                     'Rest and stay hydrated',
                     'Monitor symptoms for 24–48 hours',
@@ -95,15 +88,17 @@ Respond ONLY with this JSON structure:
         }
 
         const rawContent = data.choices[0].message.content.trim();
-
-        // Strip markdown code fences if present
-        const jsonStr = rawContent.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+        const jsonStr = rawContent
+            .replace(/^```json\s*/i, '')
+            .replace(/^```\s*/i, '')
+            .replace(/```\s*$/i, '')
+            .trim();
 
         let parsed;
         try {
             parsed = JSON.parse(jsonStr);
         } catch {
-            console.error('Failed to parse AI JSON:', rawContent);
+            console.error('Failed to parse AI response:', rawContent);
             return res.status(500).json({ error: 'AI returned an unexpected format. Please try again.' });
         }
 
@@ -120,7 +115,7 @@ Respond ONLY with this JSON structure:
         });
 
     } catch (err) {
-        console.error('Server error:', err.message);
+        console.error('Symptoms handler error:', err.message);
         return res.status(500).json({ error: 'Server error. Please try again later.' });
     }
-}
+};

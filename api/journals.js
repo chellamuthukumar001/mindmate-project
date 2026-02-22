@@ -1,16 +1,15 @@
 // api/journals.js - Vercel Serverless Function
+// NOTE: Vercel functions are stateless — data resets on cold starts.
 
 let journals = [];
 
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
+    if (req.method === 'OPTIONS') return res.status(200).end();
 
     if (req.method === 'GET') {
         return res.json(journals);
@@ -29,4 +28,4 @@ export default function handler(req, res) {
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
-}
+};
