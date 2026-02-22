@@ -1,9 +1,9 @@
-// api/journals.js - Vercel Serverless Function
+// api/journals.js - Vercel Serverless Function (ESM)
 // NOTE: Vercel functions are stateless — data resets on cold starts.
 
 let journals = [];
 
-module.exports = function handler(req, res) {
+export default function handler(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
@@ -16,16 +16,20 @@ module.exports = function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-        const { title, content } = req.body;
+        let body = req.body;
+        if (typeof body === 'string') {
+            try { body = JSON.parse(body); } catch { body = {}; }
+        }
+        const { title, content } = body || {};
         const newEntry = {
             id: Date.now(),
             title,
             content,
-            date: new Date().toISOString()
+            date: new Date().toISOString(),
         };
         journals.push(newEntry);
         return res.json(newEntry);
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
-};
+}

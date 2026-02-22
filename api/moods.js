@@ -1,13 +1,12 @@
-// api/moods.js - Vercel Serverless Function
+// api/moods.js - Vercel Serverless Function (ESM)
 // NOTE: Vercel functions are stateless — data resets on cold starts.
-// For persistent storage, use a database (Supabase, MongoDB Atlas, etc.)
 
 let moodHistory = [
     { date: '2024-02-01', value: 4, note: 'Had a great day!' },
-    { date: '2024-02-02', value: 3, note: 'A bit tired.' }
+    { date: '2024-02-02', value: 3, note: 'A bit tired.' },
 ];
 
-module.exports = function handler(req, res) {
+export default function handler(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
@@ -20,15 +19,19 @@ module.exports = function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-        const { value, note } = req.body;
+        let body = req.body;
+        if (typeof body === 'string') {
+            try { body = JSON.parse(body); } catch { body = {}; }
+        }
+        const { value, note } = body || {};
         const newEntry = {
             date: new Date().toISOString().split('T')[0],
             value,
-            note
+            note,
         };
         moodHistory.push(newEntry);
         return res.json(newEntry);
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
-};
+}

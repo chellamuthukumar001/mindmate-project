@@ -38,22 +38,34 @@ export default function ChatPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ messages: [{ role: 'user', content: userMsg.text }] })
             });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
             const data = await response.json();
 
             const aiMsg = {
                 id: Date.now() + 1,
-                text: data.reply || "I'm having trouble connecting right now. Let's try again later.",
+                text: data.reply || "I'm here for you. Take a deep breath — you're doing great.",
                 isUser: false,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                isMock: data.isMock || false,
             };
             setMessages(prev => [...prev, aiMsg]);
         } catch (error) {
-            console.error(error);
+            console.error('Chat fetch error:', error);
+            // Always show a warm fallback — never expose technical errors to the user
+            const fallbackReplies = [
+                "I hear you. I'm here to listen, even if my connection is a little slow right now. 💜",
+                "Take a deep breath. You're doing the best you can, and I'm proud of you.",
+                "It's okay to feel this way. I'm always here for you.",
+            ];
             const aiMsg = {
                 id: Date.now() + 1,
-                text: "I seem to be offline. Please check your backend connection.",
+                text: fallbackReplies[Math.floor(Math.random() * fallbackReplies.length)],
                 isUser: false,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
             };
             setMessages(prev => [...prev, aiMsg]);
         } finally {
