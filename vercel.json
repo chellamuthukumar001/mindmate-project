@@ -1,0 +1,32 @@
+{
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "devCommand": "npm run dev",
+    "installCommand": "npm install",
+    "rewrites": [
+        {
+            "source": "/api/moods",
+            "destination": "/api/moods"
+        },
+        {
+            "source": "/api/journals",
+            "destination": "/api/journals"
+        },
+        {
+            "source": "/chat",
+            "destination": "/api/chat"
+        },
+        {
+            "source": "/symptoms",
+            "destination": "/api/symptoms"
+        },
+        {
+            "source": "/health",
+            "destination": "/api/health"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}

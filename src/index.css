@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-text antialiased;
+  }
+}
+
+.glass-card {
+  @apply bg-white/70 backdrop-blur-lg border border-white/20 shadow-lg rounded-2xl;
+}
+
+.premium-shadow {
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05);
+}
+
+/* Hide scrollbar for clean mobile look */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
