@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import ChatPage from './pages/ChatPage';
@@ -6,6 +6,10 @@ import LandingPage from './pages/LandingPage';
 import BreathingPage from './pages/BreathingPage';
 import FocusPage from './pages/FocusPage';
 import MoodPage from './pages/MoodPage';
+import InstallBanner from './components/InstallBanner';
+import NotificationPrompt from './components/NotificationPrompt';
+import UpdateBanner from './components/UpdateBanner';
+import OfflineBanner from './components/OfflineBanner';
 
 function AppLayout() {
   return (
@@ -24,11 +28,20 @@ function AppLayout() {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/app/*" element={<AppLayout />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      {/* Global PWA Overlays */}
+      <UpdateBanner />
+      <OfflineBanner />
+      <NotificationPrompt />
+      <InstallBanner />
+
+      {/* Main Routes */}
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/app/*" element={<AppLayout />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }
 

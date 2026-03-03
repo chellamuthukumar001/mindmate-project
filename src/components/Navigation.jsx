@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { Home, MessageCircle, Smile, Stethoscope } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Home, MessageCircle, Smile, Stethoscope, Bell, BellDot, Download } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import ThemeToggle from './ThemeToggle';
 import SymptomChecker from './SymptomChecker';
+import { usePushNotifications, usePWAInstall } from '../hooks/usePWA';
 
 const navItems = [
     { icon: Home, label: 'Home', path: '/app' },
@@ -13,6 +14,25 @@ const navItems = [
 
 export default function Navigation() {
     const [symptomOpen, setSymptomOpen] = useState(false);
+    const [notifTooltip, setNotifTooltip] = useState(false);
+    const { permission, isSupported, requestPermission, sendLocalNotification } = usePushNotifications();
+    const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
+
+    const handleNotifClick = async () => {
+        if (!isSupported) return;
+        if (permission === 'granted') {
+            // Send a test reminder notification
+            await sendLocalNotification('MindMate Reminder ✨', {
+                body: 'Just checking in – how are you feeling right now?',
+                tag: 'manual-reminder',
+                data: { url: '/app/mood' },
+            });
+            setNotifTooltip(true);
+            setTimeout(() => setNotifTooltip(false), 2000);
+        } else {
+            await requestPermission();
+        }
+    };
 
     return (
         <>
@@ -62,9 +82,59 @@ export default function Navigation() {
                     </motion.button>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
+                    {/* Notification Bell */}
+                    {isSupported && (
+                        <div className="relative">
+                            <motion.button
+                                id="notif-bell"
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={handleNotifClick}
+                                title={permission === 'granted' ? 'Send test reminder' : 'Enable notifications'}
+                                className="relative w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all"
+                            >
+                                {permission === 'granted' ? (
+                                    <BellDot size={20} className="text-purple-600 dark:text-purple-400" />
+                                ) : (
+                                    <Bell size={20} />
+                                )}
+                                {permission === 'default' && (
+                                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-orange-500 rounded-full border-2 border-white dark:border-gray-900" />
+                                )}
+                            </motion.button>
+                            {/* Tooltip */}
+                            <AnimatePresence>
+                                {notifTooltip && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 5 }}
+                                        className="absolute top-12 right-0 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap"
+                                    >
+                                        Reminder sent! ✨
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    )}
+
+                    {/* Install button (desktop) */}
+                    {isInstallable && !isInstalled && (
+                        <motion.button
+                            id="desktop-install-btn"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={promptInstall}
+                            title="Install MindMate app"
+                            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all"
+                        >
+                            <Download size={14} />
+                            Install
+                        </motion.button>
+                    )}
+
                     <ThemeToggle />
-                    <span className="text-sm text-gray-400 font-medium hidden lg:block">Open Source</span>
                 </div>
             </nav>
 
@@ -105,6 +175,27 @@ export default function Navigation() {
                         <Stethoscope size={24} strokeWidth={2} />
                         <span className="text-[10px] font-medium mt-1">Symptom</span>
                     </button>
+
+                    {/* Mobile Notification Bell */}
+                    {isSupported && (
+                        <button
+                            id="mobile-notif-bell"
+                            onClick={handleNotifClick}
+                            className="relative flex flex-col items-center justify-center w-16 h-full text-gray-400 dark:text-gray-500"
+                        >
+                            {permission === 'granted' ? (
+                                <BellDot size={24} strokeWidth={2} className="text-purple-500 dark:text-purple-400" />
+                            ) : (
+                                <Bell size={24} strokeWidth={2} />
+                            )}
+                            {permission === 'default' && (
+                                <span className="absolute top-2 right-2.5 w-2 h-2 bg-orange-500 rounded-full" />
+                            )}
+                            <span className="text-[10px] font-medium mt-1">
+                                {permission === 'granted' ? 'Remind' : 'Alerts'}
+                            </span>
+                        </button>
+                    )}
 
                     <div className="flex flex-col items-center justify-center w-16 h-full text-gray-400">
                         <ThemeToggle />
