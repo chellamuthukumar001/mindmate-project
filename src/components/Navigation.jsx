@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { Home, MessageCircle, Smile, Stethoscope, Bell, BellDot, Download } from 'lucide-react';
+import { Home, MessageCircle, Smile, Stethoscope, Bell, BellDot, Download, HeartPulse } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ThemeToggle from './ThemeToggle';
 import SymptomChecker from './SymptomChecker';
@@ -9,6 +9,7 @@ import { usePushNotifications, usePWAInstall } from '../hooks/usePWA';
 const navItems = [
     { icon: Home, label: 'Home', path: '/app' },
     { icon: MessageCircle, label: 'Chat', path: '/app/chat' },
+    { icon: HeartPulse, label: 'Services', path: '/app/services' },
     { icon: Smile, label: 'Mood', path: '/app/mood' },
 ];
 
@@ -37,14 +38,14 @@ export default function Navigation() {
     return (
         <>
             {/* Desktop Navbar */}
-            <nav className="hidden md:flex fixed top-0 left-0 right-0 h-20 bg-white/70 dark:bg-gray-900/80 backdrop-blur-xl border-b border-white/20 dark:border-gray-700 z-50 px-8 items-center justify-between shadow-sm transition-colors">
+            <nav className="hidden md:flex fixed top-0 left-0 right-0 h-20 bg-white/60 dark:bg-surface/80 backdrop-blur-2xl border-b border-white/20 dark:border-white/5 z-50 px-8 items-center justify-between shadow-sm transition-all duration-300">
                 <Link to="/" className="flex items-center gap-3 group cursor-pointer">
-                    <motion.div
-                        whileHover={{ rotate: 10 }}
-                        className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white font-bold text-xl shadow-lg"
-                    >
-                        M
-                    </motion.div>
+                    <motion.img
+                        src="/logo.png"
+                        alt="MindMate Logo"
+                        whileHover={{ rotate: 10, scale: 1.1 }}
+                        className="w-10 h-10 drop-shadow-[0_0_15px_rgba(139,92,246,0.5)] object-contain"
+                    />
                     <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent group-hover:opacity-80 transition-opacity">MindMate</span>
                 </Link>
 
@@ -139,7 +140,7 @@ export default function Navigation() {
             </nav>
 
             {/* Mobile Bottom Navigation */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 pb-safe-area-bottom z-50 transition-colors">
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-surface/90 backdrop-blur-2xl border-t border-white/20 dark:border-white/5 pb-safe-area-bottom z-50 transition-all duration-300 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-none">
                 <div className="flex justify-around items-center h-16 px-2">
                     {navItems.map(({ icon: Icon, label, path }) => (
                         <NavLink

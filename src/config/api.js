@@ -10,4 +10,6 @@ export const API_ENDPOINTS = {
     symptoms: '/symptoms',      // → rewrites to /api/symptoms (Vercel)
     moods: '/api/moods',        // → served natively at /api/moods (Vercel)
     journals: '/api/journals',  // → served natively at /api/journals (Vercel)
+    study: '/api/study',
+    analyzeImage: '/api/analyze-image',
 };

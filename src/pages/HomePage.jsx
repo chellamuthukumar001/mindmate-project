@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sun, Battery, Activity, ArrowRight, Play, Heart, TrendingUp, Calendar, MoreHorizontal, Sparkles, Brain, Wind, MessageCircle } from 'lucide-react';
+import {
+    Sun, Battery, Activity, ArrowRight, Play, Heart,
+    TrendingUp, Calendar, MoreHorizontal, Sparkles,
+    Brain, Wind, MessageCircle, GraduationCap,
+    Image as ImageIcon
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Greeting = () => {
@@ -190,6 +195,20 @@ export default function HomePage() {
                                 description="25m Timer • Deep Work"
                                 gradient="bg-gradient-to-br from-indigo-500 via-purple-500 to-indigo-600"
                                 onClick={() => navigate('/app/focus')}
+                            />
+                            <QuickAction
+                                icon={GraduationCap}
+                                title="Study Help"
+                                description="Quizzes • AI Assistant"
+                                gradient="bg-gradient-to-br from-orange-400 via-pink-500 to-red-500"
+                                onClick={() => navigate('/app/study')}
+                            />
+                            <QuickAction
+                                icon={ImageIcon}
+                                title="Image Analysis"
+                                description="Solve Problems • Summarize"
+                                gradient="bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600"
+                                onClick={() => navigate('/app/study?mode=vision')}
                             />
                             <QuickAction
                                 icon={Wind}

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, TrendingUp, TrendingDown, Minus, Plus, Smile, Frown, Meh, Sun, Cloud, CloudRain, Sparkles, Save } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { API_ENDPOINTS } from '../config/api';
+import { Calendar, TrendingUp, TrendingDown, Smile, Sparkles, Save, LogIn } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { db } from '../config/firebase';
+import { collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } from 'firebase/firestore';
 
 const moods = [
     { emoji: '😊', label: 'Happy', value: 5, color: 'from-yellow-400 to-orange-400', bg: 'bg-yellow-50 dark:bg-yellow-900/20' },
@@ -48,7 +49,7 @@ const MoodHistoryItem = ({ entry, index }) => {
                 <div className="flex items-center justify-between mb-1">
                     <h4 className="font-bold text-gray-800 dark:text-white">{mood.label}</h4>
                     <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        {new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </span>
                 </div>
                 {entry.note && (
@@ -60,7 +61,7 @@ const MoodHistoryItem = ({ entry, index }) => {
 };
 
 export default function MoodPage() {
-    const navigate = useNavigate();
+    const { user, loginWithGoogle } = useAuth();
     const [selectedMood, setSelectedMood] = useState(null);
     const [note, setNote] = useState('');
     const [moodHistory, setMoodHistory] = useState([]);
@@ -68,24 +69,28 @@ export default function MoodPage() {
     const [stats, setStats] = useState({ average: 0, trend: 0, total: 0 });
 
     useEffect(() => {
-        fetchMoodHistory();
-    }, []);
+        if (user) {
+            fetchMoodHistory();
+        } else {
+            const localData = JSON.parse(localStorage.getItem('guest_moods') || '[]');
+            setMoodHistory(localData);
+            calculateStats(localData);
+        }
+    }, [user]);
 
     const fetchMoodHistory = async () => {
         try {
-            const response = await fetch(API_ENDPOINTS.moods);
-            const data = await response.json();
+            const q = query(
+                collection(db, 'mood_logs'),
+                where('userId', '==', user.uid),
+                orderBy('date', 'asc') // Fetch in chronological order to calculate stats easily
+            );
+            const querySnapshot = await getDocs(q);
+            const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setMoodHistory(data);
             calculateStats(data);
         } catch (error) {
-            console.error('Failed to fetch mood history:', error);
-            // Use mock data if backend fails
-            const mockData = [
-                { date: new Date().toISOString(), value: 4, note: 'Had a great day!' },
-                { date: new Date(Date.now() - 86400000).toISOString(), value: 3, note: 'Average day' }
-            ];
-            setMoodHistory(mockData);
-            calculateStats(mockData);
+            console.error('Failed to fetch mood history from Firebase:', error);
         }
     };
 
@@ -99,7 +104,6 @@ export default function MoodPage() {
         const sum = history.reduce((acc, entry) => acc + entry.value, 0);
         const average = (sum / total).toFixed(1);
 
-        // Calculate trend (comparing last 3 vs previous 3)
         const recent = history.slice(-3).reduce((acc, e) => acc + e.value, 0) / Math.min(3, history.length);
         const previous = history.slice(-6, -3).reduce((acc, e) => acc + e.value, 0) / Math.min(3, history.slice(-6, -3).length);
         const trend = previous ? ((recent - previous) / previous * 100).toFixed(0) : 0;
@@ -111,35 +115,33 @@ export default function MoodPage() {
         if (!selectedMood) return;
 
         setIsSaving(true);
-        try {
-            const response = await fetch(API_ENDPOINTS.moods, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    value: selectedMood.value,
-                    note: note
-                })
-            });
+        const newEntryData = {
+            value: selectedMood.value,
+            note: note,
+            date: new Date().toISOString(),
+        };
 
-            if (response.ok) {
-                const newEntry = await response.json();
-                setMoodHistory(prev => [...prev, newEntry]);
-                calculateStats([...moodHistory, newEntry]);
-                setSelectedMood(null);
-                setNote('');
+        try {
+            if (user) {
+                const docRef = await addDoc(collection(db, 'mood_logs'), {
+                    userId: user.uid,
+                    ...newEntryData,
+                    createdAt: serverTimestamp()
+                });
+                const savedEntry = { id: docRef.id, ...newEntryData };
+                const newHistory = [...moodHistory, savedEntry];
+                setMoodHistory(newHistory);
+                calculateStats(newHistory);
+            } else {
+                const newHistory = [...moodHistory, { id: Date.now().toString(), ...newEntryData }];
+                localStorage.setItem('guest_moods', JSON.stringify(newHistory));
+                setMoodHistory(newHistory);
+                calculateStats(newHistory);
             }
-        } catch (error) {
-            console.error('Failed to save mood:', error);
-            // Save locally if backend fails
-            const newEntry = {
-                date: new Date().toISOString(),
-                value: selectedMood.value,
-                note: note
-            };
-            setMoodHistory(prev => [...prev, newEntry]);
-            calculateStats([...moodHistory, newEntry]);
             setSelectedMood(null);
             setNote('');
+        } catch (error) {
+            console.error('Failed to save mood:', error);
         } finally {
             setIsSaving(false);
         }
@@ -147,7 +149,7 @@ export default function MoodPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 md:p-8">
-            <div className="max-w-6xl mx-auto space-y-8">
+            <div className="max-w-6xl mx-auto space-y-8 pb-32">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -160,6 +162,22 @@ export default function MoodPage() {
                     </h1>
                     <p className="text-gray-600 dark:text-gray-400 text-lg">Track your emotional journey and find patterns</p>
                 </motion.div>
+
+                {/* Logged Out Warning */}
+                {!user && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                        className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/30 p-4 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4"
+                    >
+                        <div className="flex items-center gap-3 text-yellow-800 dark:text-yellow-200">
+                            <LogIn size={24} />
+                            <p className="text-sm">You are tracking moods locally. Log in to sync across devices securely.</p>
+                        </div>
+                        <button onClick={loginWithGoogle} className="px-4 py-2 bg-yellow-500 text-white rounded-xl text-sm font-bold shadow-sm hover:bg-yellow-600 transition-colors">
+                            Sign In
+                        </button>
+                    </motion.div>
+                )}
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -242,7 +260,7 @@ export default function MoodPage() {
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
                                 placeholder="What's on your mind? (optional)"
-                                className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-gray-700 dark:text-white border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-purple-500/50 focus:border-transparent outline-none resize-none transition-all"
+                                className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-purple-500/50 focus:border-transparent outline-none resize-none transition-all"
                                 rows="3"
                             />
 
@@ -275,7 +293,7 @@ export default function MoodPage() {
                 >
                     <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Your Mood History</h2>
 
-                    <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                    <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                         {moodHistory.length === 0 ? (
                             <p className="text-center text-gray-500 dark:text-gray-400 py-12">
                                 No mood entries yet. Start tracking your emotional journey!

@@ -9,14 +9,15 @@ export default function Layout({ children }) {
     return (
         <div className="min-h-screen bg-background text-text font-sans overflow-x-hidden">
             {!isLandingPage && (
-                <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+                <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden bg-background">
                     {/* Desktop Ambient Background */}
-                    <div className="hidden md:block absolute top-[10%] left-[20%] w-[30vw] h-[30vw] bg-purple-200/40 rounded-full mix-blend-multiply filter blur-[100px] animate-pulse" />
-                    <div className="hidden md:block absolute bottom-[10%] right-[20%] w-[35vw] h-[35vw] bg-blue-200/40 rounded-full mix-blend-multiply filter blur-[100px] animate-pulse delay-1000" />
+                    <div className="hidden md:block absolute top-[10%] left-[20%] w-[35vw] h-[35vw] bg-purple-500/20 dark:bg-purple-900/30 rounded-full filter blur-[120px] animate-blob" />
+                    <div className="hidden md:block absolute top-[20%] right-[20%] w-[30vw] h-[30vw] bg-blue-500/20 dark:bg-blue-900/30 rounded-full filter blur-[120px] animate-blob animation-delay-2000" />
+                    <div className="hidden md:block absolute bottom-[10%] left-[40%] w-[40vw] h-[40vw] bg-teal-500/10 dark:bg-teal-900/20 rounded-full filter blur-[120px] animate-blob animation-delay-4000" />
 
                     {/* Mobile Ambient Background */}
-                    <div className="md:hidden absolute top-0 left-0 w-64 h-64 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-float" />
-                    <div className="md:hidden absolute bottom-0 right-0 w-64 h-64 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-float" style={{ animationDelay: '2s' }} />
+                    <div className="md:hidden absolute top-0 left-[-10%] w-72 h-72 bg-purple-500/20 dark:bg-purple-900/40 rounded-full filter blur-3xl animate-blob" />
+                    <div className="md:hidden absolute bottom-[-10%] right-[-10%] w-72 h-72 bg-blue-500/20 dark:bg-blue-900/40 rounded-full filter blur-3xl animate-blob" style={{ animationDelay: '2s' }} />
                 </div>
             )}
 
