@@ -13,9 +13,12 @@ export default function InstallBanner() {
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
-        setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
-        // Always show immediately
-        setShowFull(true);
+        const isMob = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        setIsMobile(isMob);
+        // Show full modal immediately on mobile, but keep compact toast for desktop
+        if (isMob) {
+            setShowFull(true);
+        }
     }, []);
 
     const handleDismiss = () => {
