@@ -11,7 +11,22 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const googleProvider = new GoogleAuthProvider();
+let app = null;
+let auth = null;
+let db = null;
+let googleProvider = null;
+
+try {
+    if (!firebaseConfig.apiKey) {
+        console.error("🚨 FIREBASE ENV VARS MISSING: You must add VITE_FIREBASE_* variables to Vercel!");
+    } else {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        googleProvider = new GoogleAuthProvider();
+    }
+} catch (error) {
+    console.error("🚨 FIREBASE INIT ERROR:", error);
+}
+
+export { app, auth, db, googleProvider };

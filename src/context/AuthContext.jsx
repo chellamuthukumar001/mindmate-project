@@ -9,6 +9,10 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (!auth) {
+            setLoading(false);
+            return;
+        }
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setUser(user);
             setLoading(false);
@@ -17,6 +21,10 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const loginWithGoogle = async () => {
+        if (!auth || !googleProvider) {
+            alert("Firebase is not configured! Please see Vercel environment variables.");
+            return;
+        }
         try {
             await signInWithPopup(auth, googleProvider);
         } catch (error) {
@@ -25,6 +33,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = async () => {
+        if (!auth) return;
         try {
             await signOut(auth);
         } catch (error) {
