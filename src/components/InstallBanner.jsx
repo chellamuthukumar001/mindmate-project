@@ -27,11 +27,14 @@ export default function InstallBanner() {
     const handleInstall = async () => {
         setInstalling(true);
         const accepted = await promptInstall();
-        if (!accepted) setInstalling(false);
+        if (!accepted) {
+            alert('To install: \\nOn iOS: Tap "Share" and select "Add to Home Screen"\\nOn Chrome: Click the install icon in the URL bar or menu.\\nOn Android: Tap Menu -> "Add to Home screen"');
+        }
+        setInstalling(false);
     };
 
-    // Don't show if already installed, dismissed, or not installable
-    if (isInstalled || dismissed || !isInstallable) return null;
+    // Don't show if already installed or dismissed (removed !isInstallable so we can show fallback)
+    if (isInstalled || dismissed) return null;
 
     const features = [
         { icon: Zap, text: 'Instant access from home screen' },
