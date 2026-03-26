@@ -80,6 +80,23 @@ app.post("/chat", async (req, res) => {
             }
         }
 
+        // Ensure LLaMA 3 compatibility: alternating user/assistant, and first msg after system must be user
+        const formattedMessages = [];
+        let lastRole = 'system';
+        for (const msg of messages) {
+            if (msg.role === lastRole) {
+                if (formattedMessages.length > 0) {
+                    formattedMessages[formattedMessages.length - 1].content += "\n\n" + msg.content;
+                }
+            } else {
+                formattedMessages.push({ role: msg.role, content: msg.content });
+                lastRole = msg.role;
+            }
+        }
+        if (formattedMessages.length > 0 && formattedMessages[0].role !== 'user') {
+            formattedMessages.shift();
+        }
+
         // 2. Fallback to Groq
         if (GROQ_API_KEY) {
             try {
@@ -91,7 +108,7 @@ app.post("/chat", async (req, res) => {
                     },
                     body: JSON.stringify({
                         model: "llama-3.3-70b-versatile",
-                        messages: [systemMessage, ...messages],
+                        messages: [systemMessage, ...formattedMessages],
                         temperature: 0.7,
                     }),
                 });

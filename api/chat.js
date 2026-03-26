@@ -42,6 +42,23 @@ export default async function handler(req, res) {
     }
 
     try {
+        // Ensure LLaMA 3 compatibility: alternating user/assistant, and first msg after system must be user
+        const formattedMessages = [];
+        let lastRole = 'system';
+        for (const msg of messages) {
+            if (msg.role === lastRole) {
+                if (formattedMessages.length > 0) {
+                    formattedMessages[formattedMessages.length - 1].content += "\n\n" + msg.content;
+                }
+            } else {
+                formattedMessages.push({ role: msg.role, content: msg.content });
+                lastRole = msg.role;
+            }
+        }
+        if (formattedMessages.length > 0 && formattedMessages[0].role !== 'user') {
+            formattedMessages.shift();
+        }
+
         const response = await fetch(GROQ_API_URL, {
             method: 'POST',
             headers: {
@@ -55,7 +72,7 @@ export default async function handler(req, res) {
                         role: 'system',
                         content: 'You are MindMate, a compassionate, empathetic, and calming AI mental health assistant. Keep your responses concise, supportive, and warm.'
                     },
-                    ...messages
+                    ...formattedMessages
                 ],
                 temperature: 0.7,
                 max_tokens: 1024,

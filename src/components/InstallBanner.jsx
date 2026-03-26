@@ -13,18 +13,13 @@ export default function InstallBanner() {
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
-        const wasDismissed = sessionStorage.getItem(DISMISSED_KEY);
-        setDismissed(!!wasDismissed);
         setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
-        // Show full modal after 5s for mobile
-        if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-            const timer = setTimeout(() => setShowFull(true), 5000);
-            return () => clearTimeout(timer);
-        }
+        // Always show immediately
+        setShowFull(true);
     }, []);
 
     const handleDismiss = () => {
-        sessionStorage.setItem(DISMISSED_KEY, '1');
+        // Just hide UI, do not save to session storage for this request
         setDismissed(true);
         setShowFull(false);
     };
